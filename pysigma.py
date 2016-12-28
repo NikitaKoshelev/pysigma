@@ -452,7 +452,7 @@ def paint_session(t, obj_name, obj_lon, obj_lat, tle_database, cloudcover):
                 </Placemark>
         ''' % (
             'Иллюминатор',
-            '\n'.join('%s,%s,40000\n' % (pos_geo[1], pos_geo[0]) for pos_geo in _pos_geo)
+            '\n'.join('%s,%s,40000' % (pos_geo[1], pos_geo[0]) for pos_geo in _pos_geo)
         ))
 
         # Рисуем границу отклонения оси визирования НА:
@@ -479,7 +479,7 @@ def paint_session(t, obj_name, obj_lon, obj_lat, tle_database, cloudcover):
                 </Placemark>
         ''' % (
             'Граница видимости',
-            '\n'.join('%s,%s,40000\n' % (pos_geo[1], pos_geo[0]) for pos_geo in _pos_geo)
+            '\n'.join('%s,%s,40000' % (pos_geo[1], pos_geo[0]) for pos_geo in _pos_geo)
         ))
 
         # Закрываем файл
