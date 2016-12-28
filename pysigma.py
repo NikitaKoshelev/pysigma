@@ -29,8 +29,8 @@ sun_limit = 20
 vision_limit = 220
 trace_length_in_seconds = 360
 cloudcover_limit = 0.5
-start_date = datetime.now() + timedelta(days=20)  # Сегодня
-day_num_in_plan = 30  # Планируем на неделю
+start_date = datetime.now() + timedelta(days=6)  # Сегодня
+day_num_in_plan = 7  # Планируем на неделю
 nasa_tle_url = 'http://spaceflight.nasa.gov/realdata/sightings/SSapplications/Post/JavaSSOP/orbit/ISS/SVPOST.html'
 objects_lst_file = 'uragan.lst'
 # SETUP_END
@@ -143,7 +143,7 @@ def calc_intersection(x, y, z, u, v, w):
     sq_eq_c = (x ** 2 * b ** 2 * c ** 2
                + y ** 2 * a ** 2 * c ** 2
                + z ** 2 * a ** 2 * b ** 2
-               - a ** 2 * b ** 2 * c ** 2)  
+               - a ** 2 * b ** 2 * c ** 2)
     sq_eq_D = sq_eq_b ** 2 - 4 * sq_eq_a * sq_eq_c
     if sq_eq_D > 0:
         t1 = (-sq_eq_b + sqrt(sq_eq_D)) / (2 * sq_eq_a)
@@ -520,7 +520,7 @@ if __name__ == '__main__':
     for obj in objects:
         for i in range(len(loops) - 1):
             traverz = find_traverz(loops[i], loops[i + 1], objects[obj])
-            if not (isinstance(traverz, (datetime, date))):  # and 8 < traverz.hour < 21):
+            if not (isinstance(traverz, (datetime, date)) and 8 < traverz.hour < 21):
                 continue
             tle = get_nearest_tle(traverz)
             iss = twoline2rv(tle[0], tle[1], wgs84)
@@ -550,9 +550,9 @@ if __name__ == '__main__':
                 local_traverz = traverz
                 cloudcover = -1
 
-            # if cloudcover < cloudcover_limit:
-            log.info('Object: %s; Traverz: %s; Local traverz: %s; Cloud Cover %s',
-                     obj, traverz, local_traverz, cloudcover)
-            paint_session(traverz, obj, objects[obj][0], objects[obj][1], tle_database, cloudcover)
+            if cloudcover < cloudcover_limit:
+                log.info('Object: %s; Traverz: %s; Local traverz: %s; Cloud Cover %s',
+                         obj, traverz, local_traverz, cloudcover)
+                paint_session(traverz, obj, objects[obj][0], objects[obj][1], tle_database, cloudcover)
 
     log.info('DONE ALL in %.3f sec.' % (time.time() - program_start_time))
