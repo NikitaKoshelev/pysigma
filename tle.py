@@ -2,11 +2,12 @@
 from __future__ import unicode_literals, division
 
 import logging
+import re
 from bisect import bisect_right
 from datetime import datetime, timedelta, date
-from collections import OrderedDict
 
 import requests
+from collections import OrderedDict
 from sgp4.earth_gravity import wgs84
 from sgp4.io import twoline2rv
 
@@ -16,6 +17,19 @@ from utils import clean_line
 log = logging.getLogger(__name__)
 
 NASA_TLE_URL = getattr(settings, 'nasa_tle_url')
+
+TLE_EXP = re.compile(r"(?:^|\n)\s*"
+                     r"(?P<line_0>[\w\d\s]{,24})"
+                     r"\s*\n\s*"
+                     r"(?P<line_1>"
+                     r"1 [ 0-9]{5}[A-Z] [ 0-9]{5}[ A-Z]{3} [ 0-9]{5}[.][ 0-9]{8} "
+                     r"(?:(?:[ +-][.][ 0-9]{8})|(?: [ +-][.][ 0-9]{7})) "
+                     r"[ +-][ 0-9]{5}[+-][ 0-9] [ +-][ 0-9]{5}[+-][ 0-9] [ 0-9] [ 0-9]{4}[ 0-9])"
+                     r"\s*\n\s*"
+                     r"(?P<line_2>"
+                     r"2 [ 0-9]{5} [ 0-9]{3}[.][ 0-9]{4} [ 0-9]{3}[.][ 0-9]{4} [ 0-9]{7} "
+                     r"[ 0-9]{3}[.][ 0-9]{4} [ 0-9]{3}[.][ 0-9]{4} [ 0-9]{2}[.][ 0-9]{13}[ 0-9])"
+                     r"\s*(?:\n|$)")
 
 
 class TLENotFound(ValueError):
@@ -32,17 +46,15 @@ class TLE(object):
 
     def get_latest_tle_db(self):
         tle_database = {}
-        while not tle_database:
-            response = requests.get(self.nasa_tle_url)
-            try:
-                lines = response.text.splitlines()
-                for i, line in enumerate(lines):
-                    if line.strip() == "ISS":
-                        tle_line_1 = lines[i + 1].strip()
-                        tle_line_2 = lines[i + 2].strip()
-                        tle_database[self.tle_date(tle_line_1)] = (tle_line_1, tle_line_2)
-            finally:
-                response.close()
+        # while not tle_database:
+        response = requests.get(self.nasa_tle_url)
+        try:
+            for i in TLE_EXP.finditer(response.text):
+                tle = i.groupdict()
+                if tle['line_0'].lower().count('iss'):
+                    tle_database[self.tle_date(tle['line_1'])] = (tle['line_1'], tle['line_2'])
+        finally:
+            response.close()
 
         return OrderedDict(item for item in sorted(tle_database.items()))
 
@@ -70,7 +82,7 @@ class TLE(object):
         date = clean_line(tle_line_1).split(' ')[3]
         year = 2000 + int(date[0:2])
         days_since_year_start = float(date[2:])
-        return datetime(year, 1, 1, 0, 0, 0, 0) + timedelta(days=days_since_year_start)
+        return datetime(year, 1, 1, 0, 0, 0, 0) + timedelta(days=days_since_year_start - 1)
 
     def get_iss(self, tle=None, dt=None):
         if tle is None and isinstance(dt, (datetime, date)):
@@ -98,4 +110,4 @@ def find_le(a, x):
 
 if __name__ == '__main__':
     tle = TLE()
-    print(tle.get_nearest_tle())
+    print(tle.tle_db)
