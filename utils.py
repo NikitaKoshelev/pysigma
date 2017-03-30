@@ -16,10 +16,11 @@ if sys.version_info.major < 3:
         from codecs import open
     except:
         pass
-    
+
 GOOGLE_API_KEY = getattr(settings, 'google_api_key')
 FORECASTIO_API_KEY = getattr(settings, 'forecastio_api_key')
 CLEAN_EXP = re.compile(r' +')
+LST_EXP = re.compile(r'(?P<lon>[\d\+\-]+(\.)?\d+?)\s+(?P<lat>[\d\+\-]+(\.)?\d+?)\s+\'(?P<object>.+?)\'')
 
 log = logging.getLogger(__name__)
 
@@ -63,15 +64,9 @@ def dt_range(start_dt, end_dt, step=None, include_left=True, include_right=False
 def read_lst(tle_file):
     objects = {}
     with open(tle_file, 'r', encoding='cp866') as lines:
-        for params in lines:
-            try:
-                lon, lat = params.split()[:2]
-                lon = float(lon)
-                lat = float(lat)
-                name = params.split('\'')[1].split('\'')[0]
-                objects[name] = (lat, lon)
-            except ValueError:
-                pass  # Тут нет ни долготы ни широты
+        for m in LST_EXP.finditer(lines.read()):
+            m = m.groupdict()
+            objects[m['object']] = float(m['lat']), float(m['lon'])
     return objects
 
 
@@ -115,3 +110,4 @@ if __name__ == '__main__':
     end_dt = datetime(2017, 1, 1)
     step = timedelta(days=1)
     print(*slice_timeline(start_dt, end_dt), sep='\n')
+    print(read_lst('uragan.lst'))
