@@ -16,6 +16,9 @@ if sys.version_info.major < 3:
         from codecs import open
     except:
         pass
+else:
+    from builtins import open
+
 
 GOOGLE_API_KEY = getattr(settings, 'google_api_key')
 FORECASTIO_API_KEY = getattr(settings, 'forecastio_api_key')

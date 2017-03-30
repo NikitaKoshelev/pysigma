@@ -211,7 +211,9 @@ def geolocate(position, velocity, alfa, beta, gamma, t):
     origin, direction = origin_direction(position, velocity, alfa, beta, gamma, GMST_rotation_matrix, 0)
     hit_1 = calc_intersection(origin[0, 0], origin[0, 1], origin[0, 2],
                               direction[0, 0], direction[0, 1], direction[0, 2])
-    return ecef2lla(*hit_1) if hit_1 else hit_1
+    if hit_1:
+        coords = ecef2lla(*hit_1)
+        return coords.lat, coords.lon
 
 
 def hit_the_earth(satellite, t):
